@@ -9,7 +9,7 @@ after_success:
 - export TAG=`if [ "$TRAVIS_BRANCH" == "main" ]; then echo "latest"; else echo $TRAVIS_BRANCH; fi`
 - export IMAGE_NAME=shethwala/contact-management-api
 - docker build -t $IMAGE_NAME:$COMMIT .
-- docker tag $IMAGE_NAME:$COMMIT $IMAGE_NAME:$TAG
+- docker tag $IMAGE_NAME:$TAG
 - docker push $IMAGE_NAME
 env:
   global:
