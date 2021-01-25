@@ -1,5 +1,5 @@
 insert into contact(ID, FIRST_NAME, LAST_NAME, EMAIL)
-values(1, 'Mark','Smith', 'marksmith@marksmith.com');
+values(1, 'Mohammed','Shethwala', 'abc@xyz.com');
 
 insert into contact(ID, FIRST_NAME, LAST_NAME, EMAIL)
-values(2, 'John','Doe', 'johndoe@johndoe.com');
+values(2, 'Afreen','Shethwala', 'wer@asd.com');
