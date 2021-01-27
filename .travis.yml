@@ -2,18 +2,38 @@ sudo: required
 dist: trusty
 language: java
 jdk: oraclejdk8
+cache:
+  directories:
+    - "$HOME/.m2"
+services:
+  - docker
+branches:
+  only:
+  - main
 before_install:
+- gem install travis -v 1.8.5 --no-rdoc --no-ri
+- sudo curl -k -o /usr/local/bin/ecs-cli https://s3.amazonaws.com/amazon-ecs-cli/ecs-cli-linux-amd64-latest
+- sudo chmod +x /usr/local/bin/ecs-cli
+- export BUILD_NAME=contact-management-api-$TRAVIS_BRANCH-$(date -u "+%Y%m%d%H%M%S")-$TRAVIS_BUILD_NUMBER
+- export CONTAINER_IP=54.215.193.139
 - chmod +x mvnw
 after_success:
 - docker login -u $DOCKER_USER -p $DOCKER_PASS
-- export TAG=`if [ "$TRAVIS_BRANCH" == "main" ]; then echo "latest"; else echo $TRAVIS_BRANCH; fi`
+#- export TAG=`if [ "$TRAVIS_BRANCH" == "main" ]; then echo "latest"; else echo $TRAVIS_BRANCH;
+#  fi`
 - export IMAGE_NAME=shethwala/contact-management-api
-- docker build -t $IMAGE_NAME:$COMMIT .
-- docker tag $IMAGE_NAME:$COMMIT $IMAGE_NAME:$TAG
-- docker push $IMAGE_NAME
+#- docker build -t $IMAGE_NAME:$COMMIT .
+#- docker tag $IMAGE_NAME:$COMMIT $IMAGE_NAME:$TAG
+- docker push $IMAGE_NAME:$BUILD_NAME
+script:
+- sh travis_scripts/tag_build.sh
+#- sh travis_scripts/build_services.sh
+#- sh travis_scripts/deploy_to_docker_hub.sh
+#- sh travis_scripts/deploy_to_amazon_ecs.sh
 env:
   global:
   - secure: nb1nfgK0llhE4bbfQZDbPwzOBbZpqVcZBMZBTcBBadnAFzYNQSGQOpS5c8vPYCunwiYVRvhofAX1nnwO+I+XQE0mHHrxtiq+QkMI89utdjDQQYY726saCAYs8/bondVicnEyF2aOaBPBlMWoROHtSaG+plO7nAGoKMOZmpg8dfrwUehUU9OSeZnGI3Ojl9Phuy6qJIgVefZMD9Njx2hz6TjtEDNoe0osJtcekbvJXr1VBFk2eKERtx2HMak7JOuoAhvFnKbKJFLPbradfUjtOaaAFaFeeKRroY9DMrt1A1ILZjdPeo+Fk30pbmZ4zre6Tfwl8z6SRDxI9gGTL9r8rMtkBrPx438Yl5hFjMfwUxihxy5EK5sPTnBS14gbPHiIySjDfe3HHOs1zE82yXDh0Y2bdcs/eR7Fl1Fq7bAbAVCyn+fX9/I5Ra8ULtkA4o8OrSf3X1dBB1euJpQIKucrWbfKz0QeJJKEraf96kRVoXekDke3pq7tCx+q0GDvM01+iJ//a8fxqcm5UiojPF7JCn9VcT+zDME6Xgidh4Uh3QD+GfMHySd1Bk7N/gLNhq/1F/ikfEQ9XgRa7iEh7qIs05PCAdV5WOSigEnh5fCgl19GYhJY67vbSInecQma2nOneZDTUQM2F44R9yT2MbAMHDcbifjg5H3fsH1MW6wfr7U=
   - secure: Cc31LYPsidYE5gN6RkK47tiU+WjtKtkjpTuP/HG9C4bP+XAJSAoS5y1XbK5qmWkqRx8jPLoXn+HYuGCaZKmj6Tm8dNFoQ0bXbb2n6I2aRpzPZOh4wDTxi+6E7RuGMm1uSW7X/vzC4CEhaT+JU/z/97IlSbUZH/YDZ7TYaalw6lFgWVhils1LwV8okzkXFetnm5iidhj8a3JlDdy0eA/jzEfbYIqQxu+DT6vi/Nev0R9QbgsIeKyRVS5fQKNWRtT5QU3rVJX0rPAVXx+KlJ1FGMJr50hihtEUmq2kny0SkIWtQMWd+1mc0PnuArOIn8j2l+BaSw8fUwq/lQGqde8YoSuZ1VogpY/JvA8ePy4GRX+CTRXhqIOxTsihRC6WDKRea/rBHIw8BkqbSco1xvA3mSmn7hmEM3Pj5dG+wiBVaKMruv/ADpynMcnZWj+Zp1SkucSoGe0fsOg/MHztvcVArT9KwMc0kNHhU7C42ivvZ1zqMnbRBjftRyKYpCfn1eSBvzjNaJ72joGTCnqMcTqLW3x41EfyzImOKFvHcyoNRwES1o3cneCMgvhikw4DII6Vx2HTShteI7vAt8Wku+LymPl4saBIXPlmEOtLsJM0PFbEgXAz5CLLJhiTY4vbjYAH5VntmRfkDBftxNpdo9b55JzYkoXT8xR4h9m0iwfEkeQ=
   - secure: pSJAybkYTkTHN2XOic/5z8BRVx5+bZa3AMgfqSuvcs/3VjjB1NgGpx7HExFfx6IfhpNMuM7d778Ayp7K1zQw4HKTMl8hihKkz9uzrgt+/28dV6CJDOoUEX2XwD2RG8wgeMp6vokJoBjGjOXxJ9OZk09355yxyxBTM/uPNZc74Uhru9QEUEQ71ZNVENtqhR03EUzD9iejlE3Oan6OO1AE9MAdko1edPmMKEhZXLZzy7HDGttgu0UBdiWmcSXVwOCc0bnfEMqlOmu02dyn8BWxGfbXG02asXkL60yquF2c7U5DBmO2lLV5OXW9daSnftbEXnCkOOWpzOSUbnuoZgcsjPwAnVFHQEJYg9k/yHdqFdyatU0mb6tBuJTCwT8IyZvhUhyB2FPUSUcyjMSZ4uj9h6ytfXdiOj8JXz84OOOHQppotYjVmc0F8yDX2+p7kBi1Qr7Z9282MC/Da6xcpO3GeAsxoghz6yeAioMFiHPZVi65wAmR4OI/pLxFjmdj05CH4dXz+jaF3H5FwA/2gWHLxCV3Gn24yAmlk2i0aDL4wF+mGDx/AgBuY583lQ/ndWdMhQkwSXo3dDdyqyh2P5Nse/GtucnzY5PRxRF8EJRyBGcDYdDq7O10cXxa1PT+dmHaWqnYgNlk563sAUYADkZnOsG8gZNeGoEelkv/p/8vt48=
   - COMMIT=${TRAVIS_COMMIT::8}
+  - secure: fey0JjT2cNES15wnliwvo0RHW24IfeGp94fO9bHUSXQr70zdwxB9phiDpbSNxLcFf9eIkQYIveBiYhtWqXvT8cj5Wv7aV0aAbshB8VPko4Go+auDlI5AKHXgBXBYcgL6jo2PygLmT7jwDitt8xpMXm6wzyxJkJG0pXmQeA8IDDCoMRA+mSx1brKhIQ4wylVCKKaXEZq3N2TgXpwskfNuksW7DdagM1PYJLukJxaOcqcG8EGTB7yBcJBHjP+MZ4dYsxBBks+XCt3fVwkA/iZhAC5Kwgbb4RDauWobfkHmVGCmUSBmcU4s5AEbJcpu0AMG3ZM9UUomuXdCbgsB1jOVTHAsr17JXsi8y5cDbjD+HMEHAF77qqR5xZPlZhvqiEUP+4w5syPVEQXlL9DV1gztPdVZaalCvBPUTTQVH+wBYelqT1uhHlBD/G6DCXrGhLRJA1bJJn7jjE1gAIKhxlGGGTCGExxZm1LdaJL7Y82z/qygp4+mLzpI2jt8EJd+RlkWLmqBaZyJdd3ADuSZVaSKiBSy7hP2441LvYccEpL5RlwTGhEnPJmO5dO4JaT59gqKBuBlyBkQvfipiYkhYDcwvQbf1tYJtpmJs2bVBdJmciQHbW0Hflq8l7n/1KmXOWFwmoUqufo4Phlca9YDscC9GohkH6l6ITIMd03gqZ0ARe0=
